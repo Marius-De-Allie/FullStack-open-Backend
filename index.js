@@ -73,7 +73,6 @@ app.delete('/api/persons/:id', (req, res) => {
 app.post('/api/persons', (req, res) => {
   const id = Math.floor(Math.random() * 10000);
   const body = req.body;
-  const namesArray = persons.map(person => person.name.toLowerCase());
 
   if(!body.name) {
     return res.status(400).json({ 
@@ -83,20 +82,17 @@ app.post('/api/persons', (req, res) => {
     return res.status(400).json({ 
       error: 'number missing' 
     })
-
-  } else if(namesArray.includes(body.name.toLowerCase())) {
-    return res.status(400).json({ 
-      error: 'name must be unique' 
-    })
   } else {
-    const person = {
+    const person = new Person({
       name: body.name,
       number: body.number,
       id
-    }
-    persons = persons.concat(person);
- 
-    res.json(person)
+    })
+
+    person.save().then(savedPerson => {
+      res.json(savedPerson.toJSON())
+    })
+    // persons = persons.concat(person);
   }
 });
 
