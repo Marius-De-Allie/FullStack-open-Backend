@@ -46,7 +46,9 @@ app.get('/api/persons', (req, res) => {
     Person.find({}).then(persons => {
       res.json(persons.map(person => person.toJSON()))
     })
-    .catch(e => next(e));
+    .catch(e => {
+      console.log('Unable to retrieve persons', e)
+    });
 });
 
 app.get('/info', (req, res) => {
@@ -56,7 +58,9 @@ app.get('/info', (req, res) => {
         res.send(`<p>Phonebook has info for ${persons.length} people.</p><p>${date}</p>`)
 
       })
-      .catch(e => next(e));
+      .catch(e => {
+        console.log('unable to retrive info', e)
+      });
 });
 
 app.get('/api/persons/:id', (req, res, next) => {
@@ -78,10 +82,12 @@ app.delete('/api/persons/:id', (req, res) => {
     .then(result => {
       res.status(204).end()
     })
-    .catch(e => next(e))
+    .catch(e => {
+      console.log(e)
+    });
 })
 
-app.put('/api/persons/:id', (req, res, next) => {
+app.put('/api/persons/:id', (req, res) => {
   const body = req.body;
   
   const person = {
@@ -93,31 +99,25 @@ app.put('/api/persons/:id', (req, res, next) => {
     .then(updatedPerson => {
       res.json(updatedPerson.toJSON())
     })
-    .catch(e => next(e))
+    .catch(e => {
+      console.log('Unable to update person', e) 
+    })
 })
 
-app.post('/api/persons', (req, res) => {
+app.post('/api/persons', (req, res, next) => {
   // const id = Math.floor(Math.random() * 10000);
   const body = req.body;
-
-  if(!body.name) {
-    return res.status(400).json({ 
-      error: 'name missing' 
-    })
-  } else if(!body.number) {
-    return res.status(400).json({ 
-      error: 'number missing' 
-    })
-  } else {
     const person = new Person({
       name: body.name,
       number: body.number
     })
 
-    person.save().then(savedPerson => {
-      res.json(savedPerson.toJSON())
+    person.save()
+    .then(savedPerson => savedPerson.toJSON())
+    .then(savedAndFormattedPerson => {
+      res.json(savedAndFormattedPerson)
     })
-  }
+    .catch(error => next(error))
 });
 
 const errorHandler = (error, req, res, next) => {
@@ -125,6 +125,8 @@ const errorHandler = (error, req, res, next) => {
 
   if(error.name === 'CastError') {
     return res.status(400).send({error: 'malformatted id'})
+  } else if(error.name === 'ValidationError') {
+    return res.status(400).json({ error: error.message })
   }
 
   next(error)
