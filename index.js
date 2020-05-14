@@ -54,24 +54,31 @@ app.get('/info', (req, res) => {
 });
 
 app.get('/api/persons/:id', (req, res) => {
-    const id = Number(req.params.id);
-    const person = persons.find(person => person.id === id);
-    if(person) {
-        res.json(person);
-    } else {
-        res.status(404).end()
-    }
+    const id = req.params.id;
+    Person.findById(id).then(person => {
+      res.json(person.toJSON())
+    })
+    // const person = persons.find(person => person.id === id);
+    // if(person) {
+    //     res.json(person);
+    // } else {
+    //     res.status(404).end()
+    // }
 });
 
 app.delete('/api/persons/:id', (req, res) => {
-  const id = Number(req.params.id);
-  persons = persons.filter(person => person.id !== id);
-
-  res.status(204).end()
+  const id = req.params.id;
+  Person.findByIdAndRemove(id)
+    .then(result => {
+      res.status(204).end()
+    })
+    .catch(e => {
+      console.log(e)
+    })
 })
 
 app.post('/api/persons', (req, res) => {
-  const id = Math.floor(Math.random() * 10000);
+  // const id = Math.floor(Math.random() * 10000);
   const body = req.body;
 
   if(!body.name) {
@@ -85,8 +92,7 @@ app.post('/api/persons', (req, res) => {
   } else {
     const person = new Person({
       name: body.name,
-      number: body.number,
-      id
+      number: body.number
     })
 
     person.save().then(savedPerson => {
