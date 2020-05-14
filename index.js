@@ -6,9 +6,10 @@ const Person = require('./models/person');
 
 const app = express();
 
+app.use(express.static('build'));
 app.use(express.json());
 app.use(cors());
-app.use(express.static('build'));
+// app.use(logger)
 
 // morgan token.
 morgan.token('body', (req, res) => JSON.stringify(req.body));
@@ -53,17 +54,18 @@ app.get('/info', (req, res) => {
     res.send(`<p>Phonebook has info for ${numOfPersons} people.</p><p>${date}</p>`)
 });
 
-app.get('/api/persons/:id', (req, res) => {
+app.get('/api/persons/:id', (req, res, next) => {
     const id = req.params.id;
-    Person.findById(id).then(person => {
-      res.json(person.toJSON())
-    })
-    // const person = persons.find(person => person.id === id);
-    // if(person) {
-    //     res.json(person);
-    // } else {
-    //     res.status(404).end()
-    // }
+    Person.findById(id)
+      .then(person => {
+        if(person) {
+          res.json(person.toJSON())
+
+        } else {
+          res.status(404).end()
+        }
+      })
+      .catch(e => next(e))
 });
 
 app.delete('/api/persons/:id', (req, res) => {
@@ -72,9 +74,7 @@ app.delete('/api/persons/:id', (req, res) => {
     .then(result => {
       res.status(204).end()
     })
-    .catch(e => {
-      console.log(e)
-    })
+    .catch(e => next(e))
 })
 
 app.post('/api/persons', (req, res) => {
@@ -98,9 +98,20 @@ app.post('/api/persons', (req, res) => {
     person.save().then(savedPerson => {
       res.json(savedPerson.toJSON())
     })
-    // persons = persons.concat(person);
   }
 });
+
+const errorHandler = (error, req, res, next) => {
+  console.log(error.message);
+
+  if(error.name === 'CastError') {
+    return res.status(400).send({error: 'malformatted id'})
+  }
+
+  next(error)
+};
+
+app.use(errorHandler)
 
 const PORT = process.env.PORT
 app.listen(PORT, () => {
