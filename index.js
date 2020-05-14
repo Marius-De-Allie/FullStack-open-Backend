@@ -46,12 +46,17 @@ app.get('/api/persons', (req, res) => {
     Person.find({}).then(persons => {
       res.json(persons.map(person => person.toJSON()))
     })
+    .catch(e => next(e));
 });
 
 app.get('/info', (req, res) => {
     const date = new Date();
-    const numOfPersons = persons.length;
-    res.send(`<p>Phonebook has info for ${numOfPersons} people.</p><p>${date}</p>`)
+    Person.find({})
+      .then(persons => {
+        res.send(`<p>Phonebook has info for ${persons.length} people.</p><p>${date}</p>`)
+
+      })
+      .catch(e => next(e));
 });
 
 app.get('/api/persons/:id', (req, res, next) => {
@@ -60,7 +65,6 @@ app.get('/api/persons/:id', (req, res, next) => {
       .then(person => {
         if(person) {
           res.json(person.toJSON())
-
         } else {
           res.status(404).end()
         }
