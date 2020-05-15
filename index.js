@@ -87,21 +87,26 @@ app.delete('/api/persons/:id', (req, res) => {
     });
 })
 
-app.put('/api/persons/:id', (req, res) => {
-  const body = req.body;
-  
-  const person = {
-    name: body.name,
-    number: body.number
-  }
+app.put('/api/persons/:id', (req, res, next) => {
+  // const body = req.body;
 
-  Person.findByIdAndUpdate(req.params.id, person, {new: true})
-    .then(updatedPerson => {
-      res.json(updatedPerson.toJSON())
-    })
-    .catch(e => {
-      console.log('Unable to update person', e) 
-    })
+  const person = {
+    ...req.body,
+    number: req.body.number
+  }
+  // const person = {
+  //   name: body.name,
+  //   number: body.number
+  // }
+
+  Person.findByIdAndUpdate(req.params.id, person, {new: true, runValidators: true, context: 'query'})
+    .then(updatedPerson => updatedPerson.toJSON())
+      .then(formamttedUpdatedPerson => {
+        res.json(formamttedUpdatedPerson)
+      })
+    .catch(e => next(e)
+      // console.log('Unable to update person', e) 
+    )
 })
 
 app.post('/api/persons', (req, res, next) => {

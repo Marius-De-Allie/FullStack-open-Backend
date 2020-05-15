@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const uniqueValidator = require('mongoose-unique-validator');
+const validateHook = require('feathers-validate-hook');
 
 // if(process.argv.length<3) {
 //     console.log('give password as argument')
@@ -15,7 +16,7 @@ console.log('connecting to', url);
 // const password = process.argv[2];
 
 
-mongoose.connect(url, {useNewUrlParser: true, useUnifiedTopology: true, useCreateIndex: true })
+mongoose.connect(url, {useNewUrlParser: true, useUnifiedTopology: true, useCreateIndex: true})
     .then(result => {
         console.log('connected to MongoDB');
     })
@@ -27,12 +28,17 @@ const personSchema = new mongoose.Schema({
     name: {
       type: String,
       required: true,
-      unique: true
+      unique: true,
+      minlength: 3
     },
-    number: String
+    number: {
+      type: String,
+      minlength: 8,
+      required: false
+    }
 });
 
-personSchema.plugin(uniqueValidator)
+personSchema.plugin(uniqueValidator);
 
 personSchema.set('toJSON', {
   transform: (document, returnedObject) => {
